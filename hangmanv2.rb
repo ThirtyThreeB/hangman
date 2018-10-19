@@ -100,13 +100,19 @@ end #controller class
 
 class Game
 
-	def initialize(word, guesses_remaining)
+	@word = ''
+	@word_array = []
 
-		@word = word
+	def initialize   (word, guesses_remaining)
 
+		# @word = word
+
+		# self.word = 'horse'
+		@word_array = word.split()
 	# attr_accessor :word, :answer, :guess, :result_array, :guesses_remaining, :word_array
-
 	end
+
+	
 
 		#show the correct number of blank spaces
 	def show_blanks
@@ -181,7 +187,7 @@ class Game
 
 	def game_loop
 
-		@current_game.prompt_load_saved
+		self.prompt_load_saved
 
 		self.get_word
 
@@ -205,4 +211,4 @@ end
 
 controller = Controller.new($dictionary)
 controller.new_game
-# game.game_loop
+game.game_loop
