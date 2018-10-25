@@ -21,7 +21,8 @@ class Controller
 		@current_game = Game.new(@dictionary.sample, 10)
 		puts "Here's the word cheaty, #{@word}"
 		# p word
-		@current_game.game_loop
+		p @current_game
+		game_loop
 	end
 
 	def prompt_load_saved
@@ -187,7 +188,7 @@ class Game
 
 	def game_loop
 
-		self.prompt_load_saved
+		# Controller.prompt_load_saved ###this doesn't work
 
 		self.get_word
 
@@ -209,6 +210,6 @@ end
 
 end
 
-controller = Controller.new($dictionary)
-controller.new_game
-game.game_loop
+play = Controller.new($dictionary)
+play.new_game
+# game.game_loop

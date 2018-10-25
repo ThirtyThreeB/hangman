@@ -1,0 +1,11 @@
+--- !ruby/object:Hangman
+guesses_remaining: 10
+guess: ''
+answer: n
+word: blue
+word_array:
+- b
+- l
+- u
+- e
+result_array: ____
