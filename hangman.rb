@@ -1,59 +1,126 @@
 require 'yaml'
 
-class Hangman	
+$dictionary = File.read('colors.txt').split(/\n/)
 
-	attr_accessor :word, :answer, :guess, :result_array, :guesses_remaining, :word_array
 
-	def initialize   #=(game_state)
-		@guesses_remaining = 10
-		@guess = ''
-		#Intro text
-		puts "Alright, this is a hangman game.  
-		Guess letters to fill in the blanks. 
-		You have 10 guesses to start."
+class Controller	
+
+
+	def initialize(dictionary)
+	  @dictionary = dictionary
+    @current_game = nil
 	end
 
-	# load dictionary from the page?
-	def load_library
-		#wget some url
+	def menu
+		puts "Hangman!".center(53, '-')
+		puts "Play a new game, type 1. To open a saved game, type 2"
+		input = gets.chomp
+			if input == "1"
+				new_game
+			elsif input == "2"
+				load_saved
+			else
+				puts "Type 1 or 2, please"
+				menu
+			end
+	end  
+
+	def new_game
+		@current_game = Game.new(@dictionary.sample, 10)
+		@current_game.game_loop
 	end
 
-#save was here
+	def show_saved
+		@game_array = []
+		if Dir.glob("./saved_games/*").length > 0
+			Dir.glob("./saved_games/*").each do |filename|
+   			@game_array << File.basename(filename,'.yml')
+   		end
 
-	#grab a random word from text file
-	def get_word
-		selection = IO.readlines("colors.txt")
-		@word = selection[rand(selection.length)].downcase.chomp
+			game_count = 0
+			@game_array.each do |gamepath|
+								 game_count = game_count + 1
+
+				puts "#{game_count} -- #{gamepath}"
+			end 
+
+			choose_saved
+			else
+
+			puts "You have not saved any games yet, here's a new game." 
+			new_game
+		end
+	end
+
+	def choose_saved
+		puts "Enter the number of the game you would like to open"
+		@game_name = @game_array[gets.chomp.to_i-1]
+	end
+
+	def load_saved
+		show_saved
+		game_state = YAML::load(File.read("./saved_games/#{@game_name}.yml"))
+		
+		  if game_state.is_a? Game
+      	@current_game = game_state
+      	@current_game.game_loop
+	    else
+	      self.menu
+	    end
+	end
+
+
+end
+
+
+class Game
+
+
+	def initialize(word, guesses)
+		@word = word.chomp.upcase
+		@guesses = guesses
 		@word_array = @word.chars.to_a
-		puts "Here's the word for debugging, #{@word.upcase}"
+		@result_array = "_"*@word_array.length
+	end
+
+	def game_loop
+	
+		while !self.is_over?
+			self.show_blanks(@result_array)
+			self.prompt_guess
+			
+			self.handle_guess(self.good_guess?(@guess))  #make sure to call vars in context
+			self.decrement_guesses
+			self.check_win
+		end
 	end
 
 	#show the correct number of blank spaces
-	def show_blanks
-		@result_array = "_"*@word_array.length
-		puts @result_array
+	def show_blanks(results)
+		puts "#{results}\n".center(53)
+		puts ""
 	end
 
 	def prompt_guess
-		puts "Guess a letter"
-		@guess = gets.chomp
+		puts "Guess a letter, or type 'save' to save and exit" 
+		@guess = gets.chomp.upcase
+			if @guess == "SAVE"
+				save_game
+			end
 	end
 
-
 	#check if the guess matches 1 or more letters and show letters in blanks
-	def match_letters #handle_guess
+	def match_letters 
 		indexes_matched = @word_array.each_index.select { |i| @word_array[i] == @guess}
 
 		for x in indexes_matched do
-			@result_array[x] = guess
+			@result_array[x] = @guess
 		end
-
-		puts @result_array
 	end
 
 	#checks if players guess is included in word
-	def	good_guess?(g)
-		@word_array.include?(g)
+	def	good_guess?(player_guess)
+		@word_array.include?(player_guess)
 	end
 
 	def handle_guess(good)
@@ -67,27 +134,27 @@ class Hangman
 	end
 
 	def handle_bad_guess
-		puts "Guess again"
+		puts "Try again, there's no #{@guess}" if @guesses > 0
 	end
 
 	def decrement_guesses
-		@guesses_remaining = @guesses_remaining-1
-		puts "You have #{@guesses_remaining} guesses left"
+		@guesses = @guesses-1
+		puts "You have #{@guesses} guesses left"
 	end
 
 	def check_win
-		p @guesses_remaining
-		if @guesses_remaining == 0
-			puts "It's all over, you're out of guesses"
+		if @guesses == 0
+			puts "It's all over, you're out of guesses, the word was #{@word}"
 			good_bye
 		elsif @word.chomp == @result_array
+			puts @word
 			puts "Aw yeah.  You win!"
 			good_bye
 		end
 	end
 
 	def is_over?
-		if (@guesses_remaining == 0 or @word.chomp == @result_array)
+		if (@guesses == 0 or @word.chomp == @result_array)
 			true
 		end
 	end
@@ -97,37 +164,6 @@ class Hangman
 		exit
 	end
 
-	##########saving stuff
-
-	def prompt_load_saved
-		puts	"Would you like to to open a saved game? Type y/n"
-		@answer = gets.chomp
-		if @answer == "y"
-			load_saved
-		else
-			puts "Cool, lets play a new game."
-		end
-	end
-
-	def load_saved
-		puts "here's the #{@answer}, load_saved method gets that far" ###read from file########
-		@game_state = YAML::load(File.read('./saved_games/doot.yml'))
-	
-	end
-
-	def prompt_save
-		puts "Save game? y/n"
-		answer = gets.chomp
-		if answer == "y"
-
-			save_game
-			# save_game
-		else puts "Play on!"
-		end
-	end
-
-	
-		#Save the game to a file
 	def save_game
 		puts "Type a name for your saved game"
 		game_name = gets.chomp
@@ -135,48 +171,23 @@ class Hangman
 
 		 ex_file = File.expand_path("./saved_games/#{filename}")
 		 
-		if File.exists?(ex_file)
-	   puts "#{filename} exists"
-	  
-	   save_game
-	  else
-	  	# @game_state = game
-	  	puts @game_state
-			File.open(ex_file, "w") do |f|
+			if File.exists?(ex_file)
+		   puts "#{filename} already exists"
+		  
+		   save_game
+		  else
+	  		File.open(ex_file, "w") do |f|
 
 				f.puts YAML::dump(self)
 
-				puts "Your game was saved as #{filename}"  
+				puts "Your game was saved as #{game_name}"  
 			end
+			good_bye
 		end
 	end
-end
-
-
-# save_it = Save.new
-
-game = Hangman.new
-
-game.prompt_load_saved
-
-game.get_word
-
-game.show_blanks
-
-# this works since 'game' gets me all the vars from attr_accessor
-puts YAML::dump(game)
-
-while !game.is_over?
-	#game.prompt_save
-	game.prompt_save
-
-	game.prompt_guess
-
-	game.decrement_guesses
-
-	game.handle_guess(game.good_guess?(game.guess))  #make sure to call vars in context
-
-	game.check_win
 
 end
 
+
+controller = Controller.new($dictionary)
+controller.menu
