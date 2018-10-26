@@ -1,0 +1,11 @@
+--- !ruby/object:Game
+word: BLACK
+result_array: _____
+guesses: 10
+word_array:
+- B
+- L
+- A
+- C
+- K
+guess: SAVE

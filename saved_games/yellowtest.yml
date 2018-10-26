@@ -1,0 +1,12 @@
+--- !ruby/object:Game
+word: YELLOW
+result_array: YELL__
+guesses: 7
+word_array:
+- Y
+- E
+- L
+- L
+- O
+- W
+guess: SAVE

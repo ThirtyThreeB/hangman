@@ -1,0 +1,10 @@
+--- !ruby/object:Game
+word: BLUE
+result_array: ____
+guesses: 10
+word_array:
+- B
+- L
+- U
+- E
+guess: SAVE
