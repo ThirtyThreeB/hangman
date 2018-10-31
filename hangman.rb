@@ -30,6 +30,30 @@ class Controller
 		@current_game.game_loop
 	end
 
+	def self.save_game(data) #defining the method like this makes it a class method that I can call from another method, as below
+		puts "Type a name for your saved game"
+		game_name = gets.chomp
+		filename = "#{game_name}.yml"
+
+		Dir.mkdir('./saved_games') unless Dir.exist?('./saved_games')
+
+		 ex_file = File.expand_path("./saved_games/#{filename}")
+		 
+			if File.exists?(ex_file)
+		   puts "#{filename} already exists"
+		  
+		   save_game
+		  else
+	  		File.open(ex_file, "w") do |f|
+
+				f.puts YAML::dump(data)
+
+				puts "Your game was saved as #{game_name}"  
+			end
+			self.good_bye
+		end
+	end
+
 	def show_saved
 		@game_array = []
 		if Dir.glob("./saved_games/*").length > 0
@@ -69,6 +93,11 @@ class Controller
 	    end
 	end
 
+		def self.good_bye #this must also be a class method, moved from controller
+		puts "Thanks for playing"
+		exit
+	end
+
 
 end
 
@@ -98,14 +127,13 @@ class Game
 	#show the correct number of blank spaces
 	def show_blanks(results)
 		puts "#{results}\n".center(53)
-		puts ""
 	end
 
 	def prompt_guess
 		puts "Guess a letter, or type 'save' to save and exit" 
 		@guess = gets.chomp.upcase
 			if @guess == "SAVE"
-				save_game
+				Controller.save_game(self)  #gotta do it like this to call a class method from the Controller class, also passing 'self' into the method allows me to get the vars out of the class and populate the YAML object up in the controller in #save_game
 			end
 	end
 
@@ -145,11 +173,11 @@ class Game
 	def check_win
 		if @guesses == 0
 			puts "It's all over, you're out of guesses, the word was #{@word}"
-			good_bye
+			Controller.good_bye
 		elsif @word.chomp == @result_array
 			puts @word
 			puts "Aw yeah.  You win!"
-			good_bye
+			Controller.good_bye
 		end
 	end
 
@@ -159,35 +187,19 @@ class Game
 		end
 	end
 
-	def good_bye
-		puts "Thanks for playing"
-		exit
-	end
-
-	def save_game
-		puts "Type a name for your saved game"
-		game_name = gets.chomp
-		filename = "#{game_name}.yml"
-
-		 ex_file = File.expand_path("./saved_games/#{filename}")
-		 
-			if File.exists?(ex_file)
-		   puts "#{filename} already exists"
-		  
-		   save_game
-		  else
-	  		File.open(ex_file, "w") do |f|
-
-				f.puts YAML::dump(self)
-
-				puts "Your game was saved as #{game_name}"  
-			end
-			good_bye
-		end
-	end
 
 end
 
 
 controller = Controller.new($dictionary)
 controller.menu
+
+
+#problem I have here is with loading a saved game. it doesn't see the previously saved 
+#game as a Game, so it's not loading it into the game loop
+#however, if I save a game with hungman, and load it with hangman, then it works.
+
+#looka again at the saved game files and see that the bad ones like 'gray' are saved as 
+#ontrollers with no data, and the good ones are actual Games with data
+
+#weds--- This saves as a Controller object, with no data, since I'm saving in in he controller class?
